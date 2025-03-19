@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Team</title>
+    <!-- CDNs for styling and functionality -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .kanban-column {
+            min-height: 400px;
+            background-color: #f7fafc;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .dark-mode .kanban-column {
+            background-color: #2d3748;
+        }
+        .task-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: move;
+            transition: transform 0.2s;
+        }
+        .dark-mode .task-card {
+            background-color: #4a5568;
+        }
+        .task-card:hover {
+            transform: scale(1.02);
+        }
+        .warning { background-color: #fed7d7; }
+        .urgent { background-color: #feb2b2; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-blue-600 p-4 flex justify-between items-center">
+        <div class="flex items-center">
+            <img src="https://cdn-icons-png.flaticon.com/512/3074/3074158.png" alt="Logo" class="h-10 mr-2">
+            <h1 class="text-white text-2xl">Kanban Team</h1>
+        </div>
+        <div>
+            <button id="theme-toggle" class="text-white p-2 rounded-full hover:bg-blue-700">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button id="logout-btn" class="text-white p-2 rounded-full hover:bg-blue-700 hidden">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Auth Container -->
+    <div id="auth-container" class="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow">
+        <h2 id="auth-title" class="text-2xl mb-4 text-center">Iniciar Sesión</h2>
+        <form id="auth-form">
+            <input type="email" id="email" class="w-full p-2 mb-4 border rounded" placeholder="Email" required>
+            <input type="password" id="password" class="w-full p-2 mb-4 border rounded" placeholder="Contraseña" required>
+            <button type="submit" id="auth-btn" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+                Iniciar Sesión
+            </button>
+            <p class="text-center mt-2">
+                <a href="#" id="toggle-auth" class="text-blue-600">Registrarse</a>
+            </p>
+        </form>
+    </div>
+
+    <!-- Kanban Board -->
+    <div id="kanban-board" class="container mx-auto mt-10 hidden">
+        <button id="add-task-btn" class="mb-4 bg-green-500 text-white p-2 rounded hover:bg-green-600">
+            <i class="fas fa-plus"></i> Nueva Tarea
+        </button>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="kanban-column" data-status="todo">
+                <h2 class="text-xl font-bold mb-4">Por Hacer</h2>
+                <div class="task-list" id="todo"></div>
+            </div>
+            <div class="kanban-column" data-status="in-progress">
+                <h2 class="text-xl font-bold mb-4">En Proceso</h2>
+                <div class="task-list" id="in-progress"></div>
+            </div>
+            <div class="kanban-column" data-status="done">
+                <h2 class="text-xl font-bold mb-4">Completado</h2>
+                <div class="task-list" id="done"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="task-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 class="text-2xl mb-4">Nueva Tarea</h2>
+            <form id="task-form">
+                <input type="text" id="task-title" class="w-full p-2 mb-2 border rounded" placeholder="Título" required>
+                <textarea id="task-desc" class="w-full p-2 mb-2 border rounded" placeholder="Descripción" required></textarea>
+                <select id="task-assignee" class="w-full p-2 mb-2 border rounded" multiple></select>
+                <input type="date" id="task-due" class="w-full p-2 mb-2 border rounded" required>
+                <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Guardar</button>
+                <button type="button" id="close-modal" class="w-full mt-2 bg-gray-300 p-2 rounded hover:bg-gray-400">Cerrar</button>
+            </form>
+            <div id="comments-section" class="mt-4 hidden">
+                <h3 class="text-lg">Comentarios</h3>
+                <div id="comments-list"></div>
+                <textarea id="new-comment" class="w-full p-2 mt-2 border rounded" placeholder="Añadir comentario"></textarea>
+                <button id="add-comment" class="mt-2 bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Comentar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase and App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDli1eeKNgUiNGL5WYlgIFoLSdsJd6SOuw",
+            authDomain: "kenben-11d5e.firebaseapp.com",
+            projectId: "kenben-11d5e",
+            storageBucket: "kenben-11d5e.firebasestorage.app",
+            messagingSenderId: "854508202835",
+            appId: "1:854508202835:web:3d362dc27b312fd6bdcfa6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const authContainer = document.getElementById('auth-container');
+        const kanbanBoard = document.getElementById('kanban-board');
+        const authForm = document.getElementById('auth-form');
+        const authTitle = document.getElementById('auth-title');
+        const authBtn = document.getElementById('auth-btn');
+        const toggleAuth = document.getElementById('toggle-auth');
+        const logoutBtn = document.getElementById('logout-btn');
+        const taskModal = document.getElementById('task-modal');
+        const taskForm = document.getElementById('task-form');
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const closeModal = document.getElementById('close-modal');
+        const themeToggle = document.getElementById('theme-toggle');
+        const commentsSection = document.getElementById('comments-section');
+
+        let isLogin = true;
+        let editingTaskId = null;
+
+        // Auth Handling
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                if (isLogin) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                }
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        toggleAuth.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            authTitle.textContent = isLogin ? 'Iniciar Sesión' : 'Registrarse';
+            authBtn.textContent = isLogin ? 'Iniciar Sesión' : 'Registrarse';
+            toggleAuth.textContent = isLogin ? 'Registrarse' : 'Iniciar Sesión';
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authContainer.classList.add('hidden');
+                kanbanBoard.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+                loadUsers();
+                loadTasks();
+            } else {
+                authContainer.classList.remove('hidden');
+                kanbanBoard.classList.add('hidden');
+                logoutBtn.classList.add('hidden');
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => signOut(auth));
+
+        // Task Management
+        addTaskBtn.addEventListener('click', () => {
+            editingTaskId = null;
+            taskForm.reset();
+            commentsSection.classList.add('hidden');
+            taskModal.classList.remove('hidden');
+        });
+
+        closeModal.addEventListener('click', () => taskModal.classList.add('hidden'));
+
+        taskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const task = {
+                title: document.getElementById('task-title').value,
+                description: document.getElementById('task-desc').value,
+                assignees: Array.from(document.getElementById('task-assignee').selectedOptions).map(opt => opt.value),
+                dueDate: document.getElementById('task-due').value,
+                status: 'todo',
+                createdAt: new Date().toISOString(),
+                comments: []
+            };
+
+            try {
+                if (editingTaskId) {
+                    await updateDoc(doc(db, 'tasks', editingTaskId), task);
+                } else {
+                    await addDoc(collection(db, 'tasks'), task);
+                }
+                taskModal.classList.add('hidden');
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Load Users for Assignee Selection
+        async function loadUsers() {
+            const userSelect = document.getElementById('task-assignee');
+            const usersSnapshot = await getDocs(collection(db, 'users'));
+            userSelect.innerHTML = '';
+            usersSnapshot.forEach(doc => {
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = doc.data().email;
+                userSelect.appendChild(option);
+            });
+        }
+
+        // Load and Render Tasks
+        function loadTasks() {
+            onSnapshot(collection(db, 'tasks'), (snapshot) => {
+                const taskLists = { todo: [], 'in-progress': [], done: [] };
+                snapshot.forEach(doc => {
+                    const task = { id: doc.id, ...doc.data() };
+                    taskLists[task.status].push(task);
+                });
+
+                ['todo', 'in-progress', 'done'].forEach(status => {
+                    const list = document.getElementById(status);
+                    list.innerHTML = '';
+                    taskLists[status].forEach(task => {
+                        const card = createTaskCard(task);
+                        list.appendChild(card);
+                    });
+                });
+
+                setupDragAndDrop();
+            });
+        }
+
+        function createTaskCard(task) {
+            const card = document.createElement('div');
+            card.className = 'task-card shadow';
+            card.draggable = true;
+            card.dataset.id = task.id;
+
+            const dueDate = new Date(task.dueDate);
+            const now = new Date();
+            const daysLeft = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+            const daysPending = Math.ceil((now - new Date(task.createdAt)) / (1000 * 60 * 60 * 24));
+            
+            if (daysLeft <= 3) card.classList.add('warning');
+            if (daysLeft <= 1) card.classList.add('urgent');
+
+            card.innerHTML = `
+                <h3 class="font-bold">${task.title}</h3>
+                <p>${task.description}</p>
+                <p><strong>Asignado:</strong> ${task.assignees.join(', ')}</p>
+                <p><strong>Vence:</strong> ${task.dueDate} (${daysLeft} días)</p>
+                <p><strong>Pendiente:</strong> ${daysPending} días</p>
+                <p><strong>Comentarios:</strong> ${task.comments.length}</p>
+                <button class="edit-btn bg-yellow-500 text-white p-1 rounded mt-2 hover:bg-yellow-600">Editar</button>
+                <button class="delete-btn bg-red-500 text-white p-1 rounded mt-2 hover:bg-red-600">Eliminar</button>
+            `;
+
+            card.querySelector('.edit-btn').addEventListener('click', () => editTask(task));
+            card.querySelector('.delete-btn').addEventListener('click', () => deleteTask(task.id));
+            return card;
+        }
+
+        async function editTask(task) {
+            editingTaskId = task.id;
+            document.getElementById('task-title').value = task.title;
+            document.getElementById('task-desc').value = task.description;
+            document.getElementById('task-due').value = task.dueDate;
+            const assigneeSelect = document.getElementById('task-assignee');
+            Array.from(assigneeSelect.options).forEach(option => {
+                option.selected = task.assignees.includes(option.value);
+            });
+            commentsSection.classList.remove('hidden');
+            loadComments(task);
+            taskModal.classList.remove('hidden');
+        }
+
+        async function deleteTask(taskId) {
+            if (confirm('¿Seguro que quieres eliminar esta tarea?')) {
+                await deleteDoc(doc(db, 'tasks', taskId));
+            }
+        }
+
+        // Comments
+        function loadComments(task) {
+            const commentsList = document.getElementById('comments-list');
+            commentsList.innerHTML = task.comments.map(comment => `<p>${comment}</p>`).join('');
+            document.getElementById('add-comment').onclick = async () => {
+                const newComment = document.getElementById('new-comment').value;
+                if (newComment) {
+                    task.comments.push(newComment);
+                    await updateDoc(doc(db, 'tasks', task.id), { comments: task.comments });
+                    document.getElementById('new-comment').value = '';
+                }
+            };
+        }
+
+        // Drag and Drop
+        function setupDragAndDrop() {
+            const draggables = document.querySelectorAll('.task-card');
+            const droppables = document.querySelectorAll('.kanban-column');
+
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', () => {
+                    draggable.classList.add('opacity-50');
+                });
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('opacity-50');
+                });
+            });
+
+            droppables.forEach(droppable => {
+                droppable.addEventListener('dragover', (e) => e.preventDefault());
+                droppable.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    const taskId = e.dataTransfer.getData('text/plain');
+                    const newStatus = droppable.dataset.status;
+                    const taskDoc = doc(db, 'tasks', taskId);
+                    await updateDoc(taskDoc, { status: newStatus });
+                    if (newStatus === 'done') {
+                        const task = (await getDocs(collection(db, 'tasks'))).docs.find(d => d.id === taskId).data();
+                        const dueDate = new Date(task.dueDate);
+                        if (new Date() <= dueDate) {
+                            alert('¡Felicidades! Tarea completada a tiempo');
+                        }
+                    }
+                });
+            });
+
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', draggable.dataset.id);
+                });
+            });
+        }
+
+        // Theme Toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            themeToggle.innerHTML = document.body.classList.contains('dark-mode') 
+                ? '<i class="fas fa-sun"></i>' 
+                : '<i class="fas fa-moon"></i>';
+        });
+
+        // Initial Task (create first task in Firestore)
+        async function createInitialTask() {
+            const tasksSnapshot = await getDocs(collection(db, 'tasks'));
+            if (tasksSnapshot.empty) {
+                await addDoc(collection(db, 'tasks'), {
+                    title: 'Tarea de ejemplo',
+                    description: 'Esta es una tarea de prueba',
+                    assignees: [],
+                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    status: 'todo',
+                    createdAt: new Date().toISOString(),
+                    comments: []
+                });
+            }
+        }
+        createInitialTask();
+    </script>
+</body>
+</html>
