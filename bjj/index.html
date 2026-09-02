@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<meta name="description" content="Estudia instruccionales de jiujitsu: notas por técnica con su clip a la mano.">
+<title>Tatami · Estudio de Jiujitsu</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<header id="topbar">
+  <button id="backBtn" class="icon-btn" hidden aria-label="Atrás">&#8592;</button>
+  <h1 id="title">Tatami</h1>
+  <button id="topAction" class="icon-btn" hidden></button>
+</header>
+
+<main id="app" aria-live="polite"></main>
+
+<nav id="tabbar">
+  <a href="#/biblioteca" data-tab="biblioteca"><span class="ic">&#9776;</span><span>Biblioteca</span></a>
+  <a href="#/repaso" data-tab="repaso"><span class="ic">&#9851;</span><span>Repaso</span></a>
+  <a href="#/buscar" data-tab="buscar"><span class="ic">&#9906;</span><span>Buscar</span></a>
+  <a href="#/ajustes" data-tab="ajustes"><span class="ic">&#9881;</span><span>Ajustes</span></a>
+</nav>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-backdrop" data-close></div>
+  <div class="sheet-panel" role="dialog" aria-modal="true">
+    <div class="sheet-head">
+      <strong id="sheetTitle"></strong>
+      <button class="icon-btn" data-close aria-label="Cerrar">&#10005;</button>
+    </div>
+    <div id="sheetBody" class="sheet-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<input type="file" id="filePicker" accept="video/*,.mp4,.mkv,.mov,.avi,.webm" hidden>
+<input type="file" id="jsonPicker" accept="application/json,.json" hidden>
+<input type="file" id="subPicker" accept=".srt,.vtt,.txt,text/vtt,text/plain" hidden>
+
+<script src="app.js"></script>
+</body>
+</html>
