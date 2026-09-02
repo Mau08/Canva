@@ -1,0 +1,150 @@
+/* Tatami — estudio de instruccionales de jiujitsu. Mobile-first, sin dependencias. */
+:root{
+  --bg:#0d1117; --bg2:#151b23; --bg3:#1c242e;
+  --line:#2a3441; --txt:#e6edf3; --dim:#94a3b8;
+  --acc:#e05252; --acc2:#f0a72c; --ok:#3fb950;
+  --r:14px; --safe: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+[hidden]{display:none !important}
+html,body{margin:0; padding:0}
+body{
+  background:var(--bg); color:var(--txt);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:calc(66px + var(--safe));
+  overscroll-behavior-y:contain;
+}
+h1,h2,h3{margin:0; font-weight:650; letter-spacing:-.01em}
+a{color:inherit; text-decoration:none}
+button,input,select,textarea{font:inherit; color:inherit}
+
+/* ---------- barras ---------- */
+#topbar{
+  position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:10px;
+  padding:12px 14px; background:rgba(13,17,23,.92); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+#topbar h1{font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.icon-btn{
+  background:var(--bg3); border:1px solid var(--line); color:var(--txt);
+  min-width:38px; height:38px; padding:0 11px; border-radius:11px; font-size:16px; cursor:pointer;
+}
+.icon-btn:active{background:var(--line)}
+
+#tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:30; display:flex;
+  background:rgba(21,27,35,.96); backdrop-filter:blur(8px);
+  border-top:1px solid var(--line); padding-bottom:var(--safe);
+}
+#tabbar a{
+  flex:1; text-align:center; padding:9px 2px 10px; font-size:10.5px; color:var(--dim);
+}
+#tabbar a .ic{display:block; font-size:19px; line-height:1.25}
+#tabbar a.on{color:var(--acc)}
+
+main{padding:14px 14px 26px; max-width:820px; margin:0 auto}
+
+/* ---------- bloques ---------- */
+.card{
+  display:block;
+  background:var(--bg2); border:1px solid var(--line); border-radius:var(--r);
+  padding:13px; margin-bottom:11px;
+}
+.card.tap:active{background:var(--bg3)}
+.row{display:flex; align-items:center; gap:10px}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.grow{flex:1; min-width:0}
+.dim{color:var(--dim)}
+.sm{font-size:12.5px}
+.xs{font-size:11.5px}
+.mt{margin-top:10px} .mb{margin-bottom:10px}
+.center{text-align:center}
+.trunc{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.empty{padding:34px 16px; text-align:center; color:var(--dim)}
+.empty .big{font-size:34px; margin-bottom:8px}
+hr.sep{border:0; border-top:1px solid var(--line); margin:14px 0}
+
+.btn{
+  background:var(--bg3); border:1px solid var(--line); border-radius:11px;
+  padding:10px 14px; cursor:pointer; font-weight:550;
+}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--acc); border-color:var(--acc); color:#fff}
+.btn.ghost{background:transparent}
+.btn.wide{display:block; width:100%; text-align:center}
+.btn.sm{padding:7px 11px; font-size:13px; border-radius:9px}
+.btn[disabled]{opacity:.45}
+
+label.f{display:block; margin:11px 0 5px; font-size:12.5px; color:var(--dim)}
+input[type=text],input[type=number],input[type=search],textarea,select{
+  width:100%; background:var(--bg); border:1px solid var(--line);
+  border-radius:11px; padding:11px 12px;
+}
+textarea{min-height:120px; resize:vertical; line-height:1.55}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--acc); outline-offset:-1px}
+
+.chip{
+  display:inline-block; background:var(--bg3); border:1px solid var(--line);
+  border-radius:999px; padding:3px 10px; font-size:11.5px; color:var(--dim);
+}
+.chip.on{background:var(--acc); border-color:var(--acc); color:#fff}
+.chip.t{background:#232f3d; color:#9fc7ff; border-color:#2f4256}
+.chips{display:flex; gap:6px; flex-wrap:wrap}
+
+.st{border-radius:999px; padding:3px 9px; font-size:11px; border:1px solid}
+.st-nuevo{color:#9fc7ff; border-color:#2f4256; background:#1a2432}
+.st-drill{color:var(--acc2); border-color:#4a3a1a; background:#2a2214}
+.st-ok{color:var(--ok); border-color:#1f4429; background:#152a1c}
+
+.bar{height:5px; background:var(--bg3); border-radius:99px; overflow:hidden}
+.bar > i{display:block; height:100%; background:var(--ok)}
+
+.thumb{
+  width:96px; height:56px; border-radius:9px; object-fit:cover;
+  background:var(--bg3); flex:none; border:1px solid var(--line);
+}
+.thumb.ph{display:flex; align-items:center; justify-content:center; color:var(--dim); font-size:18px}
+.thumb.big{width:100%; height:auto; aspect-ratio:16/9}
+
+/* ---------- reproductor ---------- */
+.player{position:sticky; top:62px; z-index:20; margin:-14px -14px 12px; background:#000}
+.player video{width:100%; max-height:44vh; display:block; background:#000}
+.pbar{background:var(--bg2); border-bottom:1px solid var(--line); padding:9px 12px}
+.pctl{display:flex; gap:7px; align-items:center; justify-content:center; flex-wrap:wrap}
+.pctl .btn{padding:9px 12px}
+.times{display:flex; justify-content:space-between; font-variant-numeric:tabular-nums}
+input[type=range]{width:100%; accent-color:var(--acc)}
+.abbar{position:relative; height:5px; background:var(--bg3); border-radius:99px; margin:7px 0}
+.abbar > i{position:absolute; top:0; bottom:0; background:var(--acc); border-radius:99px; opacity:.75}
+.mono{font-variant-numeric:tabular-nums}
+
+/* ---------- hoja modal ---------- */
+.sheet{position:fixed; inset:0; z-index:60; display:flex; align-items:flex-end}
+.sheet-backdrop{position:absolute; inset:0; background:rgba(0,0,0,.62)}
+.sheet-panel{
+  position:relative; width:100%; max-width:820px; margin:0 auto;
+  max-height:92vh; overflow:auto; background:var(--bg2);
+  border:1px solid var(--line); border-radius:18px 18px 0 0;
+  padding-bottom:calc(16px + var(--safe)); animation:up .18s ease-out;
+}
+@keyframes up{from{transform:translateY(22px); opacity:.6}}
+.sheet-head{
+  position:sticky; top:0; background:var(--bg2); display:flex; align-items:center;
+  justify-content:space-between; gap:10px; padding:14px; border-bottom:1px solid var(--line);
+}
+.sheet-body{padding:14px}
+
+.toast{
+  position:fixed; left:50%; transform:translateX(-50%);
+  bottom:calc(80px + var(--safe)); z-index:80;
+  background:var(--bg3); border:1px solid var(--line); border-radius:11px;
+  padding:10px 16px; font-size:13.5px; max-width:88vw; text-align:center;
+}
+
+.note-body{white-space:pre-wrap; line-height:1.6}
+.kp{margin:8px 0 0; padding-left:19px}
+.kp li{margin:3px 0}
+.hint{background:#141d2a; border:1px solid #24384f; border-radius:11px; padding:11px; font-size:12.5px; color:#a8c4e0}
+.rec{color:var(--acc); animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
